@@ -13,41 +13,41 @@ Original file is located at
 # Commented out IPython magic to ensure Python compatibility.
 # please install holidays and verstack before running this notebook :)
 # from pandas_profiling import ProfileReport
-from ydata_profiling import ProfileReport
-import verstack
-from verstack.stratified_continuous_split import scsplit
+# from ydata_profiling import ProfileReport
+# import verstack
+# from verstack.stratified_continuous_split import scsplit
 import decimal
-from datetime import datetime
+# from datetime import datetime
 
-from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV, KFold
+from sklearn.model_selection import train_test_split, GridSearchCV, KFold
 from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet
-from sklearn.preprocessing import StandardScaler, RobustScaler, OneHotEncoder
-from sklearn.impute import SimpleImputer
-from sklearn.pipeline import Pipeline, make_pipeline
+# from sklearn.preprocessing import StandardScaler, RobustScaler, OneHotEncoder
+# from sklearn.impute import SimpleImputer
+# from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn_pandas import DataFrameMapper, gen_features
 from sklearn import metrics
-from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
-from sklearn.base import clone
+from sklearn.metrics import mean_squared_error, r2_score
+# from sklearn.base import clone
 from sklearn.preprocessing import PolynomialFeatures
 
-from sklearn.impute import SimpleImputer
-from sklearn.impute import MissingIndicator
+# from sklearn.impute import SimpleImputer
+# from sklearn.impute import MissingIndicator
 from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer
 
-from sklearn.preprocessing import StandardScaler, Normalizer, OneHotEncoder, OrdinalEncoder
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import StandardScaler
+# from sklearn.preprocessing import MinMaxScaler
 
-from sklearn.pipeline import Pipeline, FeatureUnion
-from sklearn.compose import ColumnTransformer
-from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.feature_selection import VarianceThreshold
+from sklearn.pipeline import Pipeline
+# from sklearn.compose import ColumnTransformer
+# from sklearn.base import BaseEstimator, TransformerMixin
+# from sklearn.feature_selection import VarianceThreshold
 
-from sklearn.decomposition import PCA, TruncatedSVD, NMF
-from sklearn.manifold import TSNE
+# from sklearn.decomposition import PCA, TruncatedSVD, NMF
+# from sklearn.manifold import TSNE
 
-from sklearn import datasets
-from matplotlib import offsetbox
+# from sklearn import datasets
+# from matplotlib import offsetbox
 
 # import umap
 
@@ -74,7 +74,7 @@ warnings.filterwarnings('ignore')
 
 path = "./data/AirQualityUCI.csv"
 data = pd.read_csv(path, sep=";")
-print(data)
+# print(data)
 
 """## 1.1 Data Preparation and Cleaning
 
@@ -92,9 +92,9 @@ data = data.dropna(how="all")
 
 """Check the types of the columns."""
 
-print(data.shape)
-print(data.dtypes.value_counts())
-print(data.dtypes)
+# print(data.shape)
+# print(data.dtypes.value_counts())
+# print(data.dtypes)
 
 """We can see that some of the continuous variables are in obejct format. We need to change their format to float64 to be able to work with them."""
 
@@ -106,21 +106,21 @@ for column in object_to_float_features:
   data[column] = data[column].str.replace(',', '.', regex=False)
   data[column] = pd.to_numeric(data[column])
 
-print(data.dtypes)
+# print(data.dtypes)
 
 """As mention in the data documentation all the values -200 are null values, so I will replace them with NaN."""
 
 continious_features = list(data.select_dtypes('number').columns)
-print(continious_features)
+# print(continious_features)
 
 data[continious_features] = data[continious_features].replace(-200, np.NaN)
 
-print(data.isnull().sum())
+# print(data.isnull().sum())
 
 """Seems that 336 rows have no data, except Date and Time. I will delete the rows that have C6H6(GT) NaN as they have no values and check the number of null values again."""
 
 data = data.dropna(subset=["C6H6(GT)"])
-print(data.isnull().sum())
+# print(data.isnull().sum())
 
 """Reset the indexes after deletion of some rows."""
 
@@ -129,7 +129,7 @@ data.reset_index(inplace=True, drop=True)
 total = data.isnull().sum().sort_values(ascending=False)
 percent = (data.isnull().sum() / data.isnull().count()).sort_values(ascending=False)
 missing_data = pd.concat([total, percent], axis=1, keys=['Total', 'Percent'])
-print(missing_data)
+# print(missing_data)
 
 """I will fully drop the column NMHC(GT) as more than 90% of the data is missing. Later will do the split of data to train and test and impute the missing data in the columns CO(GT), NO2(GT) and NOx(GT). I will use multiple imputation as more than 15% of the data is missing in those columns."""
 
@@ -153,24 +153,24 @@ data["DayYear"] = data["Date"].apply(day_of_year)
 data["DayWeek"] = data["Date"].apply(day_of_week)
 data["Hour"] = data["Time"].apply(hour_of_day)
 
-print(data[["DayYear", "DayWeek", "Hour"]])
-data.dtypes
+# print(data[["DayYear", "DayWeek", "Hour"]])
+# data.dtypes
 
 """Change the int values of the newly added date and time columns to sine which will capchur the cycles and also bring the values to (-1, 1) range."""
 
 def sin_day_year(x):
-	return np.sin((x / 365) * 2 * np.pi)
+    return np.sin((x / 365) * 2 * np.pi)
 def sin_day_week(x):
-	return np.sin((x / 7) * 2 * np.pi)
+    return np.sin((x / 7) * 2 * np.pi)
 def sin_hour(x):
-	decimal.getcontext().prec = 6
-	tmp = decimal.getcontext().create_decimal(1.357e-05)
-	return round((np.sin((x / 24) * 2 * np.pi)), 6)
+    decimal.getcontext().prec = 6
+    tmp = decimal.getcontext().create_decimal(1.357e-05)
+    return round((np.sin((x / 24) * 2 * np.pi)), 6)
 
 data["day_year_sin"] = data["DayYear"].apply(sin_day_year)
 data["day_week_sin"] = data["DayWeek"].apply(sin_day_week)
 data["hour_sin"] = data["Hour"].apply(sin_hour)
-print(data[["day_year_sin", "day_week_sin", "hour_sin"]])
+# print(data[["day_year_sin", "day_week_sin", "hour_sin"]])
 
 # if you want to drop date and time columns overall use the "all_to_drop"
 optional_to_drop = ["day_sin", "hour_sin"]
@@ -180,7 +180,7 @@ for col in cols_to_drop:
   if col in data.columns:
     data = data.drop([col], axis=1)
 
-print(data.dtypes)
+# print(data.dtypes)
 
 """## 1.2 Separation of Test from the Dataset
 
@@ -190,12 +190,12 @@ I will split the data to training and test. I will consecuently do EDA on the tr
 y = data["C6H6(GT)"]
 X = data.drop(["C6H6(GT)"], axis=1)
 
-X_train_all, X_test, y_train_all, y_test = scsplit(X, y, stratify = y, train_size=0.75, test_size=0.25, random_state=seed)
+X_train_all, X_test, y_train_all, y_test = train_test_split(X, y, test_size=0.25, random_state=seed)
 
 """Here I used the scsplit to use the stratification by a continuous variable, our target variable in this case."""
 
-print(y_train_all.describe())
-print(y_test.describe())
+# print(y_train_all.describe())
+# print(y_test.describe())
 
 """We can observe how similar the two distributions are."""
 
@@ -208,7 +208,7 @@ ax.set_ylim(0,0.09)
 plt.title(label="Training dataset distribution",
           fontsize=20,
           color="black")
-plt.show();
+plt.show()
 fig, ax = plt.subplots()
 sns.distplot(y_test, ax=ax)
 plt.axvline(y_test.mean(), linewidth=1 , color = 'red')
@@ -260,11 +260,11 @@ def optimal_range(df_in, a, b, step=0.01, percentage=0.01):
   return "Not in this range"
 
 opt_k = optimal_range(df_train, 1, 10, step=0.2)
-print(opt_k)
+# print(opt_k)
 
-print(df_train.shape)
+# print(df_train.shape)
 df_train = remove_outlier_dataframe(df_train, opt_k)
-print(df_train.shape)
+# print(df_train.shape)
 
 df_train.reset_index(inplace=True, drop=True)
 
@@ -274,7 +274,7 @@ X_train_all = df_train.drop(["C6H6(GT)"], axis=1)
 """# 2. EDA"""
 
 descriptive_stats = df_train.describe(include='all')
-print(descriptive_stats)
+# print(descriptive_stats)
 
 """## 2.1 Correlation with Target Variable
 
@@ -282,7 +282,7 @@ Find the features highly correlated with the dependent variable.
 """
 
 corr = df_train.corr()
-print(corr["C6H6(GT)"])
+# print(corr["C6H6(GT)"])
 condition = np.abs(corr["C6H6(GT)"]) > 0.5
 top_corr = corr.loc[condition, condition]
 sns.heatmap(top_corr, cmap="coolwarm", vmin=-1, vmax=1, annot=True)
@@ -338,7 +338,7 @@ CYCLICAL = ["hour_sin"] #["day_sin", "hour_sin"]
 for cyc in CYCLICAL:
   if cyc in CONTINUOUS:
     CONTINUOUS.remove(cyc)
-print(CONTINUOUS, CYCLICAL)
+# print(CONTINUOUS, CYCLICAL)
 
 """Here I will use IterativeImputer for imputation as there was high amount of data missing more than 15% noted earlier. So imputing with the help of the other column will be more accurate."""
 
@@ -365,7 +365,7 @@ cyclical_def = gen_features(
 
 features = continuous_def + cyclical_def
 mapper = DataFrameMapper(features)
-len(features)
+# len(features)
 
 X_train_tr = pd.DataFrame(mapper.fit_transform(X_train))
 X_val_tr = pd.DataFrame(mapper.transform(X_val))
@@ -377,25 +377,25 @@ y_val_tr = scaler.transform(np.array(y_val).reshape(-1, 1))
 
 linreg = LinearRegression()
 linreg.fit(X_train_tr, y_train_tr)
-print(f'\nR2 Score: {linreg.score(X_val_tr, y_val_tr)}')
+# print(f'\nR2 Score: {linreg.score(X_val_tr, y_val_tr)}')
 
 #cross validation
 def rmse(y_gt, Y_pr):
     return np.sqrt(mean_squared_error(y_gt, Y_pr))
 
-print('RMSE val: ')
-print(rmse(y_val_tr, linreg.predict(X_val_tr)))
-print('-'*30)
-
-rmse_scorer = metrics.make_scorer(rmse)
-print('RMSE cross-validation scores:')
-CV_score = cross_val_score(linreg, X_train_tr, y_train_tr, cv=5, scoring=rmse_scorer)
-print(CV_score)
-print('-'*30)
-
-print('RMSE average cross-validation scores:')
-print(np.sum(CV_score)/5)
-print('-'*30)
+# print('RMSE val: ')
+# print(rmse(y_val_tr, linreg.predict(X_val_tr)))
+# print('-'*30)
+#
+# rmse_scorer = metrics.make_scorer(rmse)
+# print('RMSE cross-validation scores:')
+# CV_score = cross_val_score(linreg, X_train_tr, y_train_tr, cv=5, scoring=rmse_scorer)
+# print(CV_score)
+# print('-'*30)
+#
+# print('RMSE average cross-validation scores:')
+# print(np.sum(CV_score)/5)
+# print('-'*30)
 
 #metrics
 predictions = linreg.predict(X_val_tr)
@@ -424,7 +424,7 @@ X_train_all_poly = pd.DataFrame(X_train_all_poly, columns=poly_columns)
 X_test_poly = pd.DataFrame(X_test_poly, columns=poly_columns)
 
 CONTINUOUS = poly.get_feature_names_out(X_train.columns)
-print(list(CONTINUOUS))
+# print(list(CONTINUOUS))
 
 continuous_poly_def = gen_features(
     columns=[[c] for c in CONTINUOUS],
@@ -436,7 +436,7 @@ continuous_poly_def = gen_features(
 
 features_poly = continuous_poly_def
 mapper_poly = DataFrameMapper(features_poly)
-len(features_poly)
+# len(features_poly)
 
 X_train_poly_tr = pd.DataFrame(mapper_poly.fit_transform(X_train_poly))
 X_val_poly_tr = pd.DataFrame(mapper_poly.transform(X_val_poly))
@@ -448,7 +448,7 @@ y_val_poly_tr = scaler.transform(np.array(y_val).reshape(-1, 1))
 
 polyreg = LinearRegression()
 polyreg.fit(X_train_poly_tr, y_train_poly_tr)
-print(f'\nR2 Score: {polyreg.score(X_val_poly_tr, y_val_poly_tr)}')
+# print(f'\nR2 Score: {polyreg.score(X_val_poly_tr, y_val_poly_tr)}')
 
 #metrics
 predictions = polyreg.predict(X_val_poly_tr)
@@ -477,7 +477,7 @@ grid_search = GridSearchCV(pipeline, param_grid, cv=cv,
 
 grid_search.fit(pd.DataFrame(mapper.fit_transform(X_train_all)), scaler.transform(np.array(y_train_all).reshape(-1, 1)))
 
-grid_search.best_params_
+# grid_search.best_params_
 
 """According to the grid search algorithm the optimal regression is the polynomial regression. This is quite natural as we increase the number of feature, so we will have a higher R Squared value. It would be more usefull to use Adjusted R Squared value for this cause, however the LinearRegression() model metrics does not have the Adjusted R Squared value. I will leave this code as well here as it was part of the experimentation.
 
@@ -496,7 +496,7 @@ continuous_poly_def = gen_features(
 
 features_poly = continuous_poly_def
 mapper_poly = DataFrameMapper(features_poly)
-len(features_poly)
+# len(features_poly)
 
 """I will use regularization on the polynomial feature, it will help filter out the unrelated feature and result in a better model."""
 
@@ -540,14 +540,14 @@ def plot_importance(est, colnames, top_n=20):
         'feature': colnames
     })
     imp20 = importance.sort_values(by='abs_weight', ascending=False)[:top_n]
-    sns.barplot(y='feature', x='abs_weight', data=imp20, orient='h');
+    sns.barplot(y='feature', x='abs_weight', data=imp20, orient='h')
 
 lasso = Lasso()
 pipeline = Pipeline([('mapper', DataFrameMapper(features)), 
                      ('estimator', lasso)])
 
 scores, colnames = evaluate_model(X_train, X_val, y_train, y_val, pipeline)
-scores
+
 
 plot_importance(pipeline.named_steps['estimator'], colnames)
 
@@ -561,7 +561,7 @@ pipeline = Pipeline([('mapper', DataFrameMapper(features_poly)),
                      ('estimator', ridge)])
 
 scores, colnames = evaluate_model(X_train_poly, X_val_poly, y_train, y_val, pipeline)
-scores
+
 
 plot_importance(pipeline.named_steps['estimator'], colnames)
 
@@ -586,7 +586,8 @@ y_test_tr = scaler.transform(np.array(y_test).reshape(-1, 1))
 
 linreg_final = LinearRegression()
 linreg_final.fit(X_train_all_tr, y_train_all_tr)
-print(f'\nR2 Score: {linreg_final.score(X_test_tr, y_test_tr)}')
+print("Linear Regression")
+print(f'R2 Score: {round(linreg_final.score(X_test_tr, y_test_tr), 5)}')
 
 #metrics
 predictions = linreg_final.predict(X_test_tr)
@@ -610,7 +611,8 @@ y_test_poly_tr = scaler.transform(np.array(y_test).reshape(-1, 1))
 
 polyreg_final = LinearRegression()
 polyreg_final.fit(X_train_all_poly_tr, y_train_all_poly_tr)
-print(f'\nR2 Score: {polyreg_final.score(X_test_poly_tr, y_test_poly_tr)}')
+print("Polinomial Regression")
+print(f'R2 Score: {round(polyreg_final.score(X_test_poly_tr, y_test_poly_tr), 5)}')
 
 #metrics
 predictions = polyreg_final.predict(X_test_poly_tr)
@@ -637,11 +639,11 @@ errors_df = pd.DataFrame(errors, columns = ["Errors"]).set_index(pd.RangeIndex(s
 sns.kdeplot(data=errors_df, x="Errors", shade=True)
 plt.show()
 
-plt.scatter(y_test_tr, predictions);
+plt.scatter(y_test_tr, predictions)
 plt.title('Relationship of true value vs predicted value')
-plt.ylabel('Predictions');
-plt.xlabel('True value');
-plt.show();
+plt.ylabel('Predictions')
+plt.xlabel('True value')
+plt.show()
 
 #errors visualization
 #can be helpful to better understand behavior of model
@@ -653,11 +655,11 @@ errors_df = pd.DataFrame(errors, columns = ["Errors"]).set_index(pd.RangeIndex(s
 sns.kdeplot(data=errors_df, x="Errors", shade=True)
 plt.show()
 
-plt.scatter(y_test_poly_tr, predictions);
+plt.scatter(y_test_poly_tr, predictions)
 plt.title('Relationship of true value vs predicted value')
-plt.ylabel('Predictions');
-plt.xlabel('True value');
-plt.show();
+plt.ylabel('Predictions')
+plt.xlabel('True value')
+plt.show()
 
 """We can clearly see that despite errors for both models are normally distributed, errors of the polynomial model are much densly distributed around 0 than those of the linear model(the desity polts have different scales pay attention to the number on x axis, I did not equalize the graph scales as the normal distribution of the errors of the polynomial model would not be visible.)
 
@@ -670,6 +672,6 @@ To sum up, I would choose the polynomial regression over the linear regression a
 
 X_train_lm = sm.add_constant(X_train_all_poly)
 lm = sm.OLS(y_train_all, X_train_lm).fit()
-print(lm.summary())
+# print(lm.summary())
 
 """We can check the P value if higher than 0.05 we can delete those columns as their coeffitients are not significantly different from 0. That will help us to make the model even lighter without loosing precision."""

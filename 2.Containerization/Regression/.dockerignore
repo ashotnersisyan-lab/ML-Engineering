@@ -1,0 +1,17 @@
+.git
+.gitignore
+.pyc
+.md
+.idea/
+
+.docker
+
+pycache/
+*/pycache/
+**/pycache/
+
+.env/
+.venv/
+venv/
+
+data/

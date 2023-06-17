@@ -1,12 +1,18 @@
 # The python version
-FROM python:3.10
+FROM python:3.10-slim-buster
 
-ADD . .
-# ADD train.py .
-# ADD requirements.txt .
+COPY . .
 
-# Install production dependencies.
-RUN pip install --upgrade pip
-RUN pip install -r requirements.txt
+ARG USERNAME=ashot
+ARG USER_UID=1000
+ARG USER_GID=$USER_UID
+ARG GROUP=Group
 
-CMD python ./train.py
+# Create the user
+RUN groupadd -g ${USER_GID} ${GROUP} && useradd -u ${USER_UID} -g ${GROUP} -s /bin/sh ${USERNAME}
+RUN python -m pip install --upgrade pip && \
+    pip install -r requirements.txt --no-cache-dir
+
+USER $USERNAME
+
+CMD ["python", "-m", "train"]
