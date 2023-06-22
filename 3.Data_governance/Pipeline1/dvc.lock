@@ -1,0 +1,58 @@
+schema: '2.0'
+stages:
+  preprocess:
+    cmd: python scripts/preprocess_data.py
+    deps:
+    - path: data/iris.csv
+      hash: md5
+      md5: fbc13891d8eb990dde68d0910149b45b
+      size: 4606
+    - path: scripts/preprocess_data.py
+      hash: md5
+      md5: 57ffcaf73236290ee7816fcb665de7eb
+      size: 436
+    outs:
+    - path: data/test.csv
+      hash: md5
+      md5: f09c5152a0a33572f65c6af4ff764740
+      size: 965
+    - path: data/train.csv
+      hash: md5
+      md5: 1a7f99814ed70054db5f36a30550ed4b
+      size: 3697
+  train:
+    cmd: python scripts/train_model.py
+    deps:
+    - path: data/train.csv
+      hash: md5
+      md5: 1a7f99814ed70054db5f36a30550ed4b
+      size: 3697
+    - path: scripts/train_model.py
+      hash: md5
+      md5: 1a1c2ba3f9ae10ff1c6a0c79f796f407
+      size: 432
+    outs:
+    - path: models/model.pkl
+      hash: md5
+      md5: 05f1e52b735752aadadb447a7a99db66
+      size: 161907
+  evaluate:
+    cmd: python scripts/evaluate_model.py
+    deps:
+    - path: data/test.csv
+      hash: md5
+      md5: f09c5152a0a33572f65c6af4ff764740
+      size: 965
+    - path: models/model.pkl
+      hash: md5
+      md5: 05f1e52b735752aadadb447a7a99db66
+      size: 161907
+    - path: scripts/evaluate_model.py
+      hash: md5
+      md5: a793c462eb072ab3a001eea8ca3541dc
+      size: 555
+    outs:
+    - path: models/accuracy.txt
+      hash: md5
+      md5: 34e57a6711cba87cafd1e3c3aaf2ce6f
+      size: 14
