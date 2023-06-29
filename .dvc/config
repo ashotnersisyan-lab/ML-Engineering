@@ -1,0 +1,6 @@
+[core]
+    remote = drive
+['remote "drive"']
+    url = gdrive://1ul4R1QNDDzLN2l30FzEu_yZ40oWwvQQb
+    gdrive_use_service_account = true
+    gdrive_service_account_json_file_path = ../loyal-skill-391312-343308b6cb82.json
