@@ -1,0 +1,27 @@
+stages:
+  preprocess:
+    cmd: python scripts/preprocess_data.py
+    deps:
+      - scripts/preprocess_data.py
+      - data/titanic.csv
+    outs:
+      - data/train.csv
+      - data/test.csv
+
+  train:
+    cmd: python scripts/train_model.py
+    deps:
+      - scripts/train_model.py
+      - data/train.csv
+    outs:
+      - models/model.pkl
+
+  evaluate:
+    cmd: python scripts/evaluate_model.py
+    deps:
+      - scripts/evaluate_model.py
+      - models/model.pkl
+      - data/test.csv
+    metrics:
+      - models/accuracy.txt:
+          cache: false
