@@ -1,0 +1,20 @@
+version: '3.8'
+services:
+  mlflow:
+    build:
+      context: .
+      dockerfile: MlFlow_Server/Dockerfile.mlflow
+    ports:
+      - 5000:5000
+    volumes:
+      - mlflow:/mlflow
+  python:
+    build:
+      context: .
+      dockerfile: Classification/Dockerfile.python
+    volumes:
+      - .:/app
+    depends_on:
+      - mlflow
+volumes:
+  mlflow:
