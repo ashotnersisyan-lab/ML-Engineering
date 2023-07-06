@@ -1,7 +1,7 @@
 import mlflow
 import pandas as pd
-from sklearn.linear_model import LogisticRegression
-from sklearn.svm import SVC
+# from sklearn.linear_model import LogisticRegression
+# from sklearn.svm import SVC
 from catboost import CatBoostClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
@@ -40,15 +40,15 @@ X = df.drop('Survived', axis=1)
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
 # Define search spaces for hyperparameters
-logistic_space = {
-    'C': hp.uniform('C', 0.01, 10.0),
-    'penalty': hp.choice('penalty', ['none', 'l2']),
-}
-
-svm_space = {
-    'C': hp.uniform('C', 0.01, 10.0),
-    'kernel': hp.choice('kernel', ['linear', 'poly', 'rbf', 'sigmoid']),
-}
+# logistic_space = {
+#     'C': hp.uniform('C', 0.01, 10.0),
+#     'penalty': hp.choice('penalty', ['none', 'l2']),
+# }
+#
+# svm_space = {
+#     'C': hp.uniform('C', 0.01, 10.0),
+#     'kernel': hp.choice('kernel', ['linear', 'poly', 'rbf', 'sigmoid']),
+# }
 
 catboost_space = {
     'iterations': scope.int(hp.quniform('iterations', 100, 1000, 100)),
@@ -58,20 +58,20 @@ catboost_space = {
 
 
 # Define optimization function for each model
-def optimize_logistic(params):
-    model = LogisticRegression(**params)
-    model.fit(X_train, y_train)
-    pred = model.predict(X_test)
-    accuracy = accuracy_score(y_test, pred)
-    return {'loss': -accuracy, 'status': STATUS_OK}
-
-
-def optimize_svm(params):
-    model = SVC(**params)
-    model.fit(X_train, y_train)
-    pred = model.predict(X_test)
-    accuracy = accuracy_score(y_test, pred)
-    return {'loss': -accuracy, 'status': STATUS_OK}
+# def optimize_logistic(params):
+#     model = LogisticRegression(**params)
+#     model.fit(X_train, y_train)
+#     pred = model.predict(X_test)
+#     accuracy = accuracy_score(y_test, pred)
+#     return {'loss': -accuracy, 'status': STATUS_OK}
+#
+#
+# def optimize_svm(params):
+#     model = SVC(**params)
+#     model.fit(X_train, y_train)
+#     pred = model.predict(X_test)
+#     accuracy = accuracy_score(y_test, pred)
+#     return {'loss': -accuracy, 'status': STATUS_OK}
 
 
 def optimize_catboost(params):
@@ -83,8 +83,8 @@ def optimize_catboost(params):
 
 
 models = [
-    ('Logistic Regression', logistic_space, optimize_logistic),
-    ('SVM', svm_space, optimize_svm),
+    # ('Logistic Regression', logistic_space, optimize_logistic),
+    # ('SVM', svm_space, optimize_svm),
     ('CatBoost', catboost_space, optimize_catboost),
 ]
 

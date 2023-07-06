@@ -4,3 +4,4 @@ Run this command in the current directory to run the docker-compose file:
 ```
 
 Further I will create a brunch with the best model. 
+As the best performing model was the CatBoost, I left only that model in this branch.
