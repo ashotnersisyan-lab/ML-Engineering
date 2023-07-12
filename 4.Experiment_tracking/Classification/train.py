@@ -11,7 +11,7 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.impute import SimpleImputer
 
 # Load dataset
-df = pd.read_csv('data/titanic.csv')
+data = pd.read_csv('data/titanic.csv')
 
 
 # Preprocessing
@@ -31,10 +31,10 @@ def preprocess_encoded(df):
     return df
 
 
-df = preprocess_encoded(df)
+df1 = preprocess_encoded(data)
 
-y = df['Survived']
-X = df.drop('Survived', axis=1)
+y = df1['Survived']
+X = df1.drop('Survived', axis=1)
 
 # Split the dataset
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
@@ -42,7 +42,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_
 # Define search spaces for hyperparameters
 logistic_space = {
     'C': hp.uniform('C', 0.01, 10.0),
-    'penalty': hp.choice('penalty', ['none', 'l2']),
+    # 'penalty': hp.choice('penalty', ['none', 'l2']),
 }
 
 svm_space = {
@@ -57,13 +57,12 @@ catboost_space = {
 }
 
 
-# Define optimization function for each model
 def optimize_logistic(params):
     model = LogisticRegression(**params)
     model.fit(X_train, y_train)
     pred = model.predict(X_test)
     accuracy = accuracy_score(y_test, pred)
-    return {'loss': -accuracy, 'status': STATUS_OK}
+    return {'loss': -accuracy, 'status': STATUS_OK, 'model': model}
 
 
 def optimize_svm(params):
@@ -71,7 +70,7 @@ def optimize_svm(params):
     model.fit(X_train, y_train)
     pred = model.predict(X_test)
     accuracy = accuracy_score(y_test, pred)
-    return {'loss': -accuracy, 'status': STATUS_OK}
+    return {'loss': -accuracy, 'status': STATUS_OK, 'model': model}
 
 
 def optimize_catboost(params):
@@ -79,7 +78,7 @@ def optimize_catboost(params):
     model.fit(X_train, y_train)
     pred = model.predict(X_test)
     accuracy = accuracy_score(y_test, pred)
-    return {'loss': -accuracy, 'status': STATUS_OK}
+    return {'loss': -accuracy, 'status': STATUS_OK, 'model': model}
 
 
 models = [
@@ -88,19 +87,65 @@ models = [
     ('CatBoost', catboost_space, optimize_catboost),
 ]
 
-for model_name, space, optimize_func in models:
-    # Run experiment
-    with mlflow.start_run(run_name=model_name):
-        trials = Trials()
-        best_params = fmin(
-            fn=optimize_func,
-            space=space,
-            algo=tpe.suggest,
-            max_evals=10,
-            trials=trials,
-        )
+features = [
+    {"Features": "Encoding"},
+    {"Features": "New feature added"}
+]
 
-        # Log best parameters and accuracy
-        mlflow.log_params(best_params)
+
+for model_name, space, optimize_func in models:
+    with mlflow.start_run(run_name=model_name+"1"):
+        trials = Trials()
+        best = fmin(fn=optimize_func, space=space, algo=tpe.suggest, max_evals=10, trials=trials)
+
+        mlflow.log_params(best)
+        mlflow.log_params(features[0])
         best_accuracy = -trials.best_trial['result']['loss']
         mlflow.log_metric('accuracy', best_accuracy)
+        mlflow.sklearn.log_model(trials.best_trial['result']['model'], "model")
+
+
+def preprocess_feature_engineering(df):
+    # Drop non-target columns that are hard to encode
+    df = df.drop(['Name', 'Ticket', 'Cabin'], axis=1)
+
+    # Create new feature 'FamilySize' as a combination of 'SibSp' and 'Parch'
+    df['FamilySize'] = df['SibSp'] + df['Parch'] + 1
+
+    # Create 'IsAlone' feature based on 'FamilySize'
+    df['IsAlone'] = 1
+    df.loc[df['FamilySize'] > 1, 'IsAlone'] = 0
+
+    # Encode 'Sex' and 'Embarked'
+    le = LabelEncoder()
+    df['Sex'] = le.fit_transform(df['Sex'])
+    df['Embarked'] = le.fit_transform(df['Embarked'].astype(str))
+
+    # Fill in missing values
+    df = df.fillna(df.mean())
+
+    return df
+
+
+df2 = preprocess_feature_engineering(data)
+
+y = df2['Survived']
+X = df2.drop('Survived', axis=1)
+
+# Split the dataset
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+
+for model_name, space, optimize_func in models:
+    with mlflow.start_run(run_name=model_name+"2"):
+        trials = Trials()
+        best = fmin(fn=optimize_func, space=space, algo=tpe.suggest, max_evals=10, trials=trials)
+
+        mlflow.log_params(best)
+        mlflow.log_params(features[1])
+        best_accuracy = -trials.best_trial['result']['loss']
+        mlflow.log_metric('accuracy', best_accuracy)
+        mlflow.sklearn.log_model(trials.best_trial['result']['model'], "model")
+
+
+
