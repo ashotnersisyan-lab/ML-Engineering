@@ -3,18 +3,30 @@ services:
   mlflow:
     build:
       context: .
-      dockerfile: MlFlow_Server/Dockerfile.mlflow
+      dockerfile: MlFlow_Server/Dockerfile
+    volumes:
+      - ./mlruns:/mlruns
     ports:
       - 5000:5000
-    volumes:
-      - mlflow:/mlflow
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+    networks:
+      - mlflow_network
+
   python:
     build:
       context: .
-      dockerfile: Classification/Dockerfile.python
+      dockerfile: Classification/Dockerfile
     volumes:
       - .:/app
+    command: ["python", "-m", "/app/train"]
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
     depends_on:
       - mlflow
-volumes:
-  mlflow:
+    networks:
+      - mlflow_network
+
+networks:
+  mlflow_network:
+    driver: bridge
