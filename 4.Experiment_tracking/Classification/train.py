@@ -11,7 +11,7 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.impute import SimpleImputer
 
 # Load dataset
-data = pd.read_csv('data/titanic.csv')
+data = pd.read_csv('Classification/data/titanic.csv')
 
 
 # Preprocessing
