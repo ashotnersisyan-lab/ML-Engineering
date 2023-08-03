@@ -1,0 +1,2 @@
+# This will run the batch_prediction.py script every day at 3:30 AM.
+30 3 * * * python /path/to/your/project/my_ml_package/batch_prediction.py
