@@ -1,0 +1,1 @@
+This directory is needed to save the model pipeline coming from the S3 bucket.
