@@ -1,0 +1,6 @@
+boto3==1.28.27
+fastapi==0.101.1
+joblib==1.2.0
+uvicorn==0.23.2
+pandas==2.0.3
+scikit_learn==1.2.2
